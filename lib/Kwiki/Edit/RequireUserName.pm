@@ -2,32 +2,30 @@ package Kwiki::Edit::RequireUserName;
 
 use warnings;
 use strict;
-use Kwiki::Edit '-Base';
+use Kwiki::Plugin '-Base';
 use mixin 'Kwiki::Installer';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
+const class_id => 'EditRequireUserName';
 const class_title => 'Require UserName to edit';
 
 sub register {
   my $registry = shift;
   $registry->add(action   => 'edit_noUserName');
-  $registry->add(action   => 'edit');
-  $registry->add(action   => 'edit_contention');
-  $registry->add(toolbar  => 'edit_button', 
-		 template => 'edit_button.html',
-		 show_for => ['display', 'revisions', 'edit_contention'],
-		);
+  $registry->add(hook => 'edit:edit', pre => 'require_username');
 
 }
 
-sub edit {
+sub require_username {
+  my $hook = pop;
+  my $req_username_obj = $self->hub->load_class('EditRequireUserName');
   my $page = $self->pages->current;
-  if (! $self->have_UserName) {
+  if (! $req_username_obj->have_UserName) {
     my $page_uri = $page->uri;
-    return $self->redirect("action=edit_noUserName&page_id=$page_uri");
+    $hook->cancel();		# don't bother calling Kwiki::Edit::edit
+    return $self->redirect("action=edit_noUserName&page_name=$page_uri");
   }
-  super;
 }
 
 sub have_UserName {
@@ -62,8 +60,7 @@ manually.
 
 =head1 REQUIRES
 
-   Kwiki 0.33 (tested against this version)
-   Kwiki::Edit (comes standard with Kwiki)
+   Kwiki 0.37 (new hooking mechanism)
    Kwiki::UserName (adds user name functionality to Kwiki)
    Kwiki::UserPreferences (adds the ability to change user names)
 
@@ -78,11 +75,7 @@ manually.
    cd ~/where/your/kwiki/is/located
    vi plugins
 
-Replace
-
-   Kwiki::Edit
-
-with
+Add the line
 
   Kwiki::Edit::RequireUserName
 
@@ -95,14 +88,22 @@ Then run
 
   kwiki -update
 
+=head1 UPGRADING
+
+The previous version of Kwiki::Edit::RequireUserName subclassed
+Kwik::Edit, so the old documentation asked you to remove Kwiki::Edit
+from your list of plugins.  This new version of
+Kwiki::Edit::RequireUserName no longer subclasses Kwiki::Edit, so you
+should put that line back in.
+
 =head1 AUTHOR
 
 James Peregrino, C<< <jperegrino@post.harvard.edu> >>
 
 =head1 ACKNOWLEDGEMENTS
 
-This extension of Kwiki::Edit was inspired by the techniques used in
-Kwiki::Scode by Kang-min Liu.
+This plugin was inspired by the techniques used in Kwiki::Scode by
+Kang-min Liu.
 
 =head1 BUGS
 
@@ -133,8 +134,10 @@ a UserName for yourself.
 <!-- END edit_noUserName.html -->
 __template/tt2/edit_button.html__
 <!-- BEGIN edit_button.html -->
-[% rev_id = hub.revisions.revision_id %]
-<a href="[% script_name %]?action=edit&page_id=[% page_uri %][% IF rev_id %]&revision_id=[% rev_id %][% END %]" accesskey="e" title="Edit This Page">
+[% IF hub.pages.current.is_writable %]
+[% rev_id = hub.have_plugin('revisions') ? hub.revisions.revision_id : 0 %]
+<a href="[% script_name %]?action=edit&page_name=[% page_uri %][% IF rev_id %]&revision_id=[% rev_id %][% END %]" accesskey="e" title="Edit This Page">
 [% INCLUDE edit_button_icon.html %]
 </a>
+[% END %]
 <!-- END edit_button.html -->

@@ -8,8 +8,7 @@ SYNOPSIS
     do this. Of course this won't prevent spam created manually.
 
 REQUIRES
-       Kwiki 0.33 (tested against this version)
-       Kwiki::Edit (comes standard with Kwiki)
+       Kwiki 0.37 (new hooking mechanism)
        Kwiki::UserName (adds user name functionality to Kwiki)
        Kwiki::UserPreferences (adds the ability to change user names)
 
@@ -22,11 +21,7 @@ INSTALLATION
        cd ~/where/your/kwiki/is/located
        vi plugins
 
-    Replace
-
-       Kwiki::Edit
-
-    with
+    Add the line
 
       Kwiki::Edit::RequireUserName
 
@@ -39,12 +34,19 @@ INSTALLATION
 
       kwiki -update
 
+UPGRADING
+    The previous version of Kwiki::Edit::RequireUserName subclassed
+    Kwik::Edit, so the old documentation asked you to remove Kwiki::Edit
+    from your list of plugins. This new version of
+    Kwiki::Edit::RequireUserName no longer subclasses Kwiki::Edit, so you
+    should put that line back in.
+
 AUTHOR
     James Peregrino, "<jperegrino@post.harvard.edu>"
 
 ACKNOWLEDGEMENTS
-    This extension of Kwiki::Edit was inspired by the techniques used in
-    Kwiki::Scode by Kang-min Liu.
+    This plugin was inspired by the techniques used in Kwiki::Scode by
+    Kang-min Liu.
 
 BUGS
     Please report any bugs or feature requests to
